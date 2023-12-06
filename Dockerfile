@@ -114,6 +114,20 @@ WORKDIR $HOME/Fast-DDS/Fast-DDS/build
 RUN CXXFLAGS="-fno-strict-aliasing" cmake ..  
 RUN cmake --build . --target all -j8 && sudo make install
 
+WORKDIR $HOME
+RUN sudo apt install -y fonts-dejavu java-common libasound2 libfreetype6 libfontconfig1 libxi6 libxrender1 libxtst6
+RUN wget https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.21+9/openlogic-openjdk-11.0.21+9-linux-x64-deb.deb
+RUN sudo dpkg -i openlogic-openjdk-11.0.21+9-linux-x64-deb.deb
+RUN sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/openlogic-openjdk-11-hotspot-amd64/bin/java 2
+RUN sudo update-alternatives --config java
+
+WORKDIR $HOME/Fast-DDS
+RUN git clone --recursive https://github.com/eProsima/Fast-DDS-Gen.git
+RUN cd Fast-DDS-Gen && git checkout v2.5.1
+RUN cd Fast-DDS-Gen && ./gradlew assemble
+
+ENV PATH=$PATH:/usr/local/tools/fastdds:$HOME/Fast-DDS/Fast-DDS-Gen/scripts
+
 #
 # Build ev3dev C++ bindings
 #
@@ -124,5 +138,3 @@ WORKDIR $HOME/ev3dev/ev3dev-lang-cpp
 RUN mkdir build 
 RUN cd build && CXXFLAGS="-fno-strict-aliasing" cmake .. -DEV3DEV_PLATFORM=EV3
 RUN cd build && cmake --build . --target all -j6 && sudo make install
-
-ENV PATH=$PATH:/usr/local/tools/fastdds
