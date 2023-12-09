@@ -1,0 +1,21 @@
+
+enum Ev3SensorType {
+    Button, Touch, Color, Ultrasonic, Gyro, IR
+};
+
+struct Ev3SensorEvent
+{
+    Ev3SensorType sensor_type;
+};
+
+enum Ev3Button {
+    Back, Left, Right, Up, Down, Enter
+};
+
+struct Ev3ButtonEvent : Ev3SensorEvent
+{
+    //true if pressed, false if released
+    boolean pressed;
+    Ev3Button button;
+};
+

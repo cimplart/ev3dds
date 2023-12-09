@@ -75,7 +75,7 @@ WORKDIR $HOME/asio
 RUN sudo chown compiler $HOME/asio
 RUN git clone https://github.com/chriskohlhoff/asio.git
 RUN cd asio && git checkout asio-1-12-2
-RUN cd asio/asio && ./autogen.sh && ./configure --host=arm-linux-gnueabi  --without-boost && make -j6 && sudo make install 
+RUN cd asio/asio && ./autogen.sh && ./configure --host=arm-linux-gnueabi --without-boost --prefix=/opt/ev3dds && make -j6 && sudo make install 
 
 #
 # Build tinyxml2
@@ -83,7 +83,7 @@ RUN cd asio/asio && ./autogen.sh && ./configure --host=arm-linux-gnueabi  --with
 WORKDIR $HOME/tinyxml
 RUN sudo chown compiler $HOME/tinyxml
 RUN git clone https://github.com/leethomason/tinyxml2.git
-RUN mkdir tinyxml-build && cd tinyxml-build && CXXFLAGS="-fPIC" cmake ../tinyxml2 && make -j4 && sudo make install
+RUN mkdir tinyxml-build && cd tinyxml-build && CXXFLAGS="-fPIC" cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds ../tinyxml2 && make -j4 && sudo make install
 
 WORKDIR $HOME/Fast-DDS
 RUN sudo chown compiler $HOME/Fast-DDS
@@ -95,7 +95,7 @@ RUN git clone https://github.com/eProsima/foonathan_memory_vendor.git
 RUN cd foonathan_memory_vendor && git checkout v1.3.1
 RUN mkdir foonathan_memory_vendor/build
 WORKDIR $HOME/Fast-DDS/foonathan_memory_vendor/build
-RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DBUILD_SHARED_LIBS=ON
+RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds
 RUN cmake --build . --target all -j6 && sudo make install
 
 WORKDIR $HOME/Fast-DDS
@@ -103,7 +103,7 @@ RUN git clone https://github.com/eProsima/Fast-CDR.git
 RUN cd Fast-CDR && git checkout v1.0.24
 RUN mkdir Fast-CDR/build
 WORKDIR $HOME/Fast-DDS/Fast-CDR/build
-RUN CXXFLAGS="-fno-strict-aliasing" cmake .. 
+RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds
 RUN cmake --build . --target all -j6 && sudo make install
 
 WORKDIR $HOME/Fast-DDS
@@ -111,7 +111,7 @@ RUN git clone https://github.com/eProsima/Fast-DDS.git
 RUN cd Fast-DDS && git checkout 2.6.x
 RUN mkdir Fast-DDS/build
 WORKDIR $HOME/Fast-DDS/Fast-DDS/build
-RUN CXXFLAGS="-fno-strict-aliasing" cmake ..  
+RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds 
 RUN cmake --build . --target all -j8 && sudo make install
 
 WORKDIR $HOME
@@ -136,5 +136,5 @@ RUN sudo chown compiler $HOME/ev3dev
 RUN git clone https://github.com/ddemidov/ev3dev-lang-cpp.git
 WORKDIR $HOME/ev3dev/ev3dev-lang-cpp
 RUN mkdir build 
-RUN cd build && CXXFLAGS="-fno-strict-aliasing" cmake .. -DEV3DEV_PLATFORM=EV3
+RUN cd build && CXXFLAGS="-fno-strict-aliasing" cmake .. -DEV3DEV_PLATFORM=EV3 -DCMAKE_INSTALL_PREFIX=/opt/ev3dds
 RUN cd build && cmake --build . --target all -j6 && sudo make install
