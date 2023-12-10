@@ -35,8 +35,18 @@
 
 using namespace eprosima::fastdds::dds;
 
+static std::map<enum Ev3Button, std::string> buttonStr = {
+    { Back, "Back" },
+    { Up, "Up" },
+    { Down, "Down" },
+    { Left, "Left" },
+    { Right, "Right" },
+    { Enter, "Enter" }
+};
 
-Ev3NodePublisher::Ev3NodePublisher() : myType(new Ev3SensorEventPubSubType()) /* object managed by TypeSupport class */
+Ev3NodePublisher::Ev3NodePublisher() 
+    : mySensorEventType(new Ev3SensorEventPubSubType()), /* object managed by TypeSupport class */
+      myButtonEventType(new Ev3ButtonEventPubSubType())  /* object managed by TypeSupport class */
 {
     DomainParticipantQos pqos;
     pqos.name("Participant_pub");
@@ -45,27 +55,36 @@ Ev3NodePublisher::Ev3NodePublisher() : myType(new Ev3SensorEventPubSubType()) /*
         throw std::runtime_error("Failed creating domain participant");
     }  
 
+    mySensorEventType.register_type(myParticipant);
+    myButtonEventType.register_type(myParticipant);
+
     myPublisher = myParticipant->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
     if (myPublisher == nullptr) {
         DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
         throw std::runtime_error("Failed creating EV3 node publisher");
     }
 
-    mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", "Ev3SensorEvent", TOPIC_QOS_DEFAULT);
+    mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", myButtonEventType.get_type_name(), 
+                                                     TOPIC_QOS_DEFAULT);
     if (mySensorEventTopic == nullptr)  {
         myParticipant->delete_publisher(myPublisher);
         DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
         throw std::runtime_error("Failed creating EV3 sensor event topic");
     }
 
-    myWriter = myPublisher->create_datawriter(mySensorEventTopic, DATAWRITER_QOS_DEFAULT, &myListener);
+    DataWriterQos wqos = myPublisher->get_default_datawriter_qos();
+    wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;  
+    wqos.liveliness().lease_duration = 5;
+    wqos.liveliness().announcement_period = 1;
+    wqos.liveliness().kind = AUTOMATIC_LIVELINESS_QOS;
+
+    myWriter = myPublisher->create_datawriter(mySensorEventTopic, wqos, &myListener);
     if (myWriter == nullptr)  {
         myParticipant->delete_topic(mySensorEventTopic);
         myParticipant->delete_publisher(myPublisher);
         DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
         throw std::runtime_error("Failed creating EV3 sensor event writer");
     }
-    myType.register_type(myParticipant);
 
     struct ButtonPair
     {
@@ -84,10 +103,12 @@ Ev3NodePublisher::Ev3NodePublisher() : myType(new Ev3SensorEventPubSubType()) /*
     for (auto& bpair: buttons) {
         enum Ev3Button kind = bpair.bKind;
         bpair.b.onclick = [this, kind](bool pressed) {
-            Ev3ButtonEvent event;
-            event.button(kind);
-            event.pressed(pressed);
-            myWriter->write(&event);
+            void* sample = myButtonEventType->createData();
+            Ev3ButtonEvent *asEvent = static_cast<Ev3ButtonEvent*>(sample);
+            asEvent->button(kind);
+            asEvent->pressed(pressed);
+            std::cout << buttonStr[kind] << " is " << (pressed ? "pressed" : "released") << '\n';
+            myWriter->write(sample);
         };
     }
 }

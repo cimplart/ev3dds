@@ -42,7 +42,8 @@ private:
     eprosima::fastdds::dds::Subscriber* mySubscriber = nullptr;
     eprosima::fastdds::dds::Topic* mySensorEventTopic = nullptr;
     eprosima::fastdds::dds::DataReader* myReader = nullptr;
-    eprosima::fastdds::dds::TypeSupport myType;
+    eprosima::fastdds::dds::TypeSupport mySensorEventType;
+    eprosima::fastdds::dds::TypeSupport myButtonEventType;
 
     class SubListener : public eprosima::fastdds::dds::DataReaderListener
     {

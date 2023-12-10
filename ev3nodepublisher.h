@@ -47,8 +47,8 @@ private:
     eprosima::fastdds::dds::Topic *mySensorEventTopic = nullptr;
     eprosima::fastdds::dds::DataWriter *myWriter = nullptr;
 
-    eprosima::fastdds::dds::TypeSupport myType;
-
+    eprosima::fastdds::dds::TypeSupport mySensorEventType;
+    eprosima::fastdds::dds::TypeSupport myButtonEventType;
 
     class PubListener : public eprosima::fastdds::dds::DataWriterListener
     {

@@ -47,20 +47,20 @@ RUN tar xzf Python-3.7.17.tgz
 RUN cd Python-3.7.17 && ./configure && make -j8 && sudo make install
 RUN python3 --version 
 
-# Uninstall the libssl-dev package as it conflicts with the armel package.
-RUN sudo apt remove -y libssl-dev
-
-ARG ARMEL_PKG_LIST="libssl-dev:armel"
-RUN sudo apt install -y ${ARMEL_PKG_LIST}
-
 #
 # Build cmake for host
 #
 WORKDIR $HOME/cmake 
 RUN sudo chown compiler $HOME/cmake 
-RUN wget https://cmake.org/files/v3.15/cmake-3.15.7.tar.gz
-RUN tar xzf cmake-3.15.7.tar.gz
-RUN mkdir cmake-build && cd cmake-build && ../cmake-3.15.7/bootstrap && make -j6 && sudo make install
+RUN wget https://cmake.org/files/v3.16/cmake-3.16.9.tar.gz
+RUN tar xzf cmake-3.16.9.tar.gz
+RUN mkdir cmake-build && cd cmake-build && ../cmake-3.16.9/bootstrap && make -j6 && sudo make install
+
+# Uninstall the libssl-dev package as it conflicts with the armel package.
+RUN sudo apt remove -y libssl-dev
+
+ARG ARMEL_PKG_LIST="libssl-dev:armel"
+RUN sudo apt install -y ${ARMEL_PKG_LIST}
 
 #
 # From now on build for the EV3 target
@@ -84,6 +84,17 @@ WORKDIR $HOME/tinyxml
 RUN sudo chown compiler $HOME/tinyxml
 RUN git clone https://github.com/leethomason/tinyxml2.git
 RUN mkdir tinyxml-build && cd tinyxml-build && CXXFLAGS="-fPIC" cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds ../tinyxml2 && make -j4 && sudo make install
+
+#
+# Build googletest
+#
+WORKDIR $HOME/googletest
+RUN sudo chown compiler $HOME/googletest
+RUN git clone --branch release-1.11.0 https://github.com/google/googletest 
+RUN mkdir googletest/build 
+WORKDIR $HOME/googletest/googletest/build 
+RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds
+RUN cmake --build . --target all -j6 && sudo make install
 
 WORKDIR $HOME/Fast-DDS
 RUN sudo chown compiler $HOME/Fast-DDS
@@ -109,9 +120,12 @@ RUN cmake --build . --target all -j6 && sudo make install
 WORKDIR $HOME/Fast-DDS
 RUN git clone https://github.com/eProsima/Fast-DDS.git
 RUN cd Fast-DDS && git checkout 2.6.x
+#atomic_uint32_t is missing in <atomic> 
+RUN cd Fast-DDS && sed -i 's/std::atomic_uint32_t/std::atomic_uint/g' test/unittest/utils/SystemInfoTests.cpp
 RUN mkdir Fast-DDS/build
 WORKDIR $HOME/Fast-DDS/Fast-DDS/build
-RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds 
+RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds \
+    -DSYSTEM_TESTS=ON -DEPROSIMA_BUILD_TESTS=ON # -DCOMPILE_EXAMPLES=ON
 RUN cmake --build . --target all -j8 && sudo make install
 
 WORKDIR $HOME

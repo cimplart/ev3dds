@@ -31,14 +31,17 @@
 
 using namespace eprosima::fastdds::dds;
 
-Ev3SensorSubscriber::Ev3SensorSubscriber() : myType(new Ev3SensorEventPubSubType()) /* object managed by TypeSupport class */
+Ev3SensorSubscriber::Ev3SensorSubscriber() 
+    : mySensorEventType(new Ev3SensorEventPubSubType()), /* object managed by TypeSupport class */
+      myButtonEventType(new Ev3ButtonEventPubSubType())  /* object managed by TypeSupport class */
 {
-    DomainParticipantQos pqos;
-    pqos.name("Participant_sub");
-    myParticipant = DomainParticipantFactory::get_instance()->create_participant(myDomain, pqos);
+    myParticipant = DomainParticipantFactory::get_instance()->create_participant(myDomain, PARTICIPANT_QOS_DEFAULT);
     if (myParticipant == nullptr) {
         throw std::runtime_error("Failed creating domain participant");
     }  
+
+    mySensorEventType.register_type(myParticipant);
+    myButtonEventType.register_type(myParticipant);
 
     mySubscriber = myParticipant->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
     if (mySubscriber == nullptr) {
@@ -46,15 +49,20 @@ Ev3SensorSubscriber::Ev3SensorSubscriber() : myType(new Ev3SensorEventPubSubType
         throw std::runtime_error("Failed creating domain subscriber");
     }
 
-    mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", "Ev3SensorEvent", TOPIC_QOS_DEFAULT);    
+    mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", myButtonEventType.get_type_name(), 
+                                                      TOPIC_QOS_DEFAULT);    
     if (mySensorEventTopic == nullptr)  {
         myParticipant->delete_subscriber(mySubscriber);
         DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
         throw std::runtime_error("Failed creating EV3 sensor event topic");
     }
 
-    DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
+    DataReaderQos rqos = mySubscriber->get_default_datareader_qos();
     rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+    rqos.liveliness().lease_duration = 5;
+    rqos.liveliness().announcement_period = 1;
+    rqos.liveliness().kind = AUTOMATIC_LIVELINESS_QOS;
+
     myReader = mySubscriber->create_datareader(mySensorEventTopic, rqos, &myListener);
     if (myReader == nullptr) {
         myParticipant->delete_topic(mySensorEventTopic);
@@ -101,8 +109,11 @@ void Ev3SensorSubscriber::SubListener::on_data_available(DataReader* reader)
 {
     SampleInfo info;
     Ev3ButtonEvent event;
+
     if (reader->take_next_sample(&event, &info) == ReturnCode_t::RETCODE_OK) {
-        if (info.instance_state == ALIVE_INSTANCE_STATE) {
+        if (info.instance_state != ALIVE_INSTANCE_STATE) {
+            std::cout << "instance not alive\n";
+        } else  {
             samples_++;
             std::cout << "Button " << buttonStr[event.button()] << " is " << (event.pressed() ? "pressed" : "released") <<  std::endl;
         }
