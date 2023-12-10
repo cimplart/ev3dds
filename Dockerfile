@@ -126,7 +126,7 @@ RUN git clone --recursive https://github.com/eProsima/Fast-DDS-Gen.git
 RUN cd Fast-DDS-Gen && git checkout v2.5.1
 RUN cd Fast-DDS-Gen && ./gradlew assemble
 
-ENV PATH=$PATH:/usr/local/tools/fastdds:$HOME/Fast-DDS/Fast-DDS-Gen/scripts
+ENV PATH=$PATH:/opt/ev3dds/tools/fastdds:$HOME/Fast-DDS/Fast-DDS-Gen/scripts
 
 #
 # Build ev3dev C++ bindings
