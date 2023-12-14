@@ -37,7 +37,7 @@ public:
 
 private:
 
-    static constexpr eprosima::fastdds::dds::DomainId_t myDomain = 1;
+    static constexpr eprosima::fastdds::dds::DomainId_t myDomain = 0;
     eprosima::fastdds::dds::DomainParticipant* myParticipant = nullptr;
     eprosima::fastdds::dds::Subscriber* mySubscriber = nullptr;
     eprosima::fastdds::dds::Topic* mySensorEventTopic = nullptr;

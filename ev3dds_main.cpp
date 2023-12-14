@@ -46,6 +46,8 @@ int main(int argc, char **argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
 
+    Log::SetVerbosity(Log::Kind::Info);
+
     try {
         Ev3NodePublisher publisher;
 

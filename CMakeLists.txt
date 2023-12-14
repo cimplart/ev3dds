@@ -5,6 +5,8 @@ project(ev3ddsagent)
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_VERBOSE_MAKEFILE ON)
 
+option (HOST_PC_BUILD "Skip EV3-specific targets" OFF)
+
 list(APPEND CMAKE_PREFIX_PATH "/opt/ev3dds")
 link_directories(AFTER "/opt/ev3dds/lib")
 
@@ -24,7 +26,9 @@ add_custom_command(
     DEPENDS ev3data.idl   # Treated as relative to CMAKE_CURRENT_SOURCE_DIR
 )
 
+if (NOT ${HOST_PC_BUILD})
 add_executable(ev3ddsnode ev3dds_main.cpp ev3nodepublisher.cpp ${generated_sources})
 target_link_libraries(ev3ddsnode fastrtps fastcdr foonathan_memory ev3dev)
+endif()
 
 add_subdirectory(test)

@@ -125,7 +125,7 @@ RUN cd Fast-DDS && sed -i 's/std::atomic_uint32_t/std::atomic_uint/g' test/unitt
 RUN mkdir Fast-DDS/build
 WORKDIR $HOME/Fast-DDS/Fast-DDS/build
 RUN CXXFLAGS="-fno-strict-aliasing" cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/opt/ev3dds \
-    -DSYSTEM_TESTS=ON -DEPROSIMA_BUILD_TESTS=ON # -DCOMPILE_EXAMPLES=ON
+    -DFASTDDS_ENFORCE_LOG_INFO=ON -DLOG_NO_INFO=OFF # -DSYSTEM_TESTS=ON -DEPROSIMA_BUILD_TESTS=ON -DCOMPILE_EXAMPLES=ON
 RUN cmake --build . --target all -j8 && sudo make install
 
 WORKDIR $HOME

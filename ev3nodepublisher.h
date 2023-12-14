@@ -26,6 +26,7 @@
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
+#include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <memory>
 #include "ev3dataPubSubTypes.h"
 
@@ -41,7 +42,7 @@ public:
     void process_sensors();
 
 private:
-    static constexpr eprosima::fastdds::dds::DomainId_t myDomain = 1;
+    static constexpr eprosima::fastdds::dds::DomainId_t myDomain = 0;
 	eprosima::fastdds::dds::DomainParticipant *myParticipant = nullptr;
 	eprosima::fastdds::dds::Publisher *myPublisher = nullptr;
     eprosima::fastdds::dds::Topic *mySensorEventTopic = nullptr;
@@ -49,6 +50,33 @@ private:
 
     eprosima::fastdds::dds::TypeSupport mySensorEventType;
     eprosima::fastdds::dds::TypeSupport myButtonEventType;
+
+    using DomainParticipant = eprosima::fastdds::dds::DomainParticipant;
+
+    class MyDomainListener : public eprosima::fastdds::dds::DomainParticipantListener
+    {
+        virtual void on_participant_discovery(DomainParticipant* /*participant*/,
+            eprosima::fastrtps::rtps::ParticipantDiscoveryInfo&& info) override
+        {
+            if (info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT)  {
+                std::cout << "New participant discovered" << std::endl;
+            } else if (info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::REMOVED_PARTICIPANT ||
+                    info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::DROPPED_PARTICIPANT)  {
+                std::cout << "New participant lost" << std::endl;
+            }
+        }        
+
+        virtual void on_subscriber_discovery(
+                DomainParticipant* /*participant*/,
+                eprosima::fastrtps::rtps::ReaderDiscoveryInfo&& info) override
+        {
+            if (info.status == eprosima::fastrtps::rtps::ReaderDiscoveryInfo::DISCOVERED_READER)  {
+                std::cout << "New subscriber discovered" << std::endl;
+            } else if (info.status == eprosima::fastrtps::rtps::ReaderDiscoveryInfo::REMOVED_READER)   {
+                std::cout << "New subscriber lost" << std::endl;
+            }
+        }        
+    };
 
     class PubListener : public eprosima::fastdds::dds::DataWriterListener
     {
