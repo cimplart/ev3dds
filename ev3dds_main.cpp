@@ -21,6 +21,8 @@
 // SOFTWARE.
 
 #include "ev3nodepublisher.h"
+#include "ev3nodesubscriber.h"
+#include "ev3drive.h"
 #include <fastrtps/log/Log.h>
 #include <signal.h>
 #include <unistd.h>
@@ -46,10 +48,13 @@ int main(int argc, char **argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
 
-    Log::SetVerbosity(Log::Kind::Info);
+    Log::SetVerbosity(Log::Kind::Warning);
 
     try {
         Ev3NodePublisher publisher;
+        Ev3NodeSubscriber subscriber;
+        Ev3Drive drive;
+        subscriber.set_listener(&drive);
 
         while ( !terminate) {
             publisher.process_sensors();
@@ -57,7 +62,7 @@ int main(int argc, char **argv)
         }
     } catch(const std::exception& e) {
         std::cerr << "main: exception " << e.what() << '\n';
-    }
+    }    
     Log::Reset();
     return 0; 
 }

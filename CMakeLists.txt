@@ -27,7 +27,7 @@ add_custom_command(
 )
 
 if (NOT ${HOST_PC_BUILD})
-add_executable(ev3ddsnode ev3dds_main.cpp ev3nodepublisher.cpp ${generated_sources})
+add_executable(ev3ddsnode ev3dds_main.cpp ev3nodepublisher.cpp ev3nodesubscriber.cpp ev3drive.cpp ${generated_sources})
 target_link_libraries(ev3ddsnode fastrtps fastcdr foonathan_memory ev3dev)
 endif()
 

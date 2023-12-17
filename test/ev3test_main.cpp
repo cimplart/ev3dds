@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
     sigaction(SIGTERM, &sigIntHandler, NULL);
 
-    Log::SetVerbosity(Log::Kind::Info);
+    Log::SetVerbosity(Log::Kind::Warning);
 
     try {
         Ev3SensorSubscriber subscriber;

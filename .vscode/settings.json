@@ -1,0 +1,9 @@
+{
+    "cmake.configureOnOpen": false,
+    "cpp.creator.sourceFileNamePreset":  "{{*CLASSNAMELOWER*}}.cpp",
+    "cpp.creator.headerFileNamePreset": "{{*CLASSNAMELOWER*}}.h",
+    "files.associations": {
+        "typeindex": "cpp",
+        "typeinfo": "cpp"
+    }
+}

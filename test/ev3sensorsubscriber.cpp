@@ -38,18 +38,18 @@ Ev3SensorSubscriber::Ev3SensorSubscriber()
     DomainParticipantQos qos = PARTICIPANT_QOS_DEFAULT;
 
 #ifdef REMOTE_PEER
-    eprosima::fastrtps::rtps::Locator_t locator;
-    eprosima::fastrtps::rtps::IPLocator::setIPv4(locator, 172, 17, 134, 54);
-    locator.port = 7412;
-    qos.wire_protocol().builtin.metatrafficUnicastLocatorList.push_back(locator);    
+    // eprosima::fastrtps::rtps::Locator_t locator;
+    // eprosima::fastrtps::rtps::IPLocator::setIPv4(locator, 0, 0, 0, 0);
+    // locator.port = 7412;
+    // qos.wire_protocol().builtin.metatrafficUnicastLocatorList.push_back(locator);    
 
     // configure an initial peer on host 192.168.50.244.
     // The port number corresponds to the well-known port for metatraffic unicast
     // on participant ID `1` and domain `0`.
-    eprosima::fastrtps::rtps::Locator_t initial_peer;
-    eprosima::fastrtps::rtps::IPLocator::setIPv4(initial_peer, "192.168.50.244");
-    initial_peer.port = 7412;
-    qos.wire_protocol().builtin.initialPeersList.push_back(initial_peer);
+    // eprosima::fastrtps::rtps::Locator_t initial_peer;
+    // eprosima::fastrtps::rtps::IPLocator::setIPv4(initial_peer, "192.168.50.244");
+    // initial_peer.port = 7412;
+    // qos.wire_protocol().builtin.initialPeersList.push_back(initial_peer);
 #endif
 
     myParticipant = DomainParticipantFactory::get_instance()->create_participant(myDomain, qos);

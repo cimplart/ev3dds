@@ -19,3 +19,11 @@ struct Ev3ButtonEvent : Ev3SensorEvent
     Ev3Button button;
 };
 
+enum Ev3MoveType {
+    Forward, ForwardLeft, ForwardRight, SpinLeft, SpinRight, Backward
+};
+
+struct Ev3MoveCommand {
+    Ev3MoveType move;
+    boolean make;         //stop if false
+};

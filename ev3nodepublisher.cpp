@@ -51,17 +51,17 @@ Ev3NodePublisher::Ev3NodePublisher()
     DomainParticipantQos pqos = PARTICIPANT_QOS_DEFAULT;
     // This locator will open a socket to listen network messages
     // on UDPv4 port 7412 over address 192.168.50.244
-    eprosima::fastrtps::rtps::Locator_t locator;
-    eprosima::fastrtps::rtps::IPLocator::setIPv4(locator, 192, 168, 50, 244);
-    locator.port = 7412;
-    pqos.wire_protocol().builtin.metatrafficUnicastLocatorList.push_back(locator);    
+    // eprosima::fastrtps::rtps::Locator_t locator;
+    // eprosima::fastrtps::rtps::IPLocator::setIPv4(locator, 192, 168, 50, 244);
+    //locator.port = 7412;
+    // pqos.wire_protocol().builtin.metatrafficUnicastLocatorList.push_back(locator);    
 
     // The initial peer address.
-    eprosima::fastrtps::rtps::Locator_t initial_peer;
-    eprosima::fastrtps::rtps::IPLocator::setIPv4(initial_peer, 172, 17, 134, 54);
-    pqos.wire_protocol().builtin.initialPeersList.push_back(initial_peer);
+    // eprosima::fastrtps::rtps::Locator_t initial_peer;
+    // eprosima::fastrtps::rtps::IPLocator::setIPv4(initial_peer, 192, 168, 50, 178);
+    // pqos.wire_protocol().builtin.initialPeersList.push_back(initial_peer);
 
-    pqos.name("Participant_pub");
+    //pqos.name("Participant_pub");
     myParticipant = DomainParticipantFactory::get_instance()->create_participant(myDomain, pqos);
     if (myParticipant == nullptr) {
         throw std::runtime_error("Failed creating domain participant");
