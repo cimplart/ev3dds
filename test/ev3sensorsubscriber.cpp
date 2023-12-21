@@ -57,46 +57,56 @@ Ev3SensorSubscriber::Ev3SensorSubscriber()
         throw std::runtime_error("Failed creating domain participant");
     }  
 
-    mySensorEventType.register_type(myParticipant);
-    myButtonEventType.register_type(myParticipant);
+    try {
+        mySensorEventType.register_type(myParticipant);
+        myButtonEventType.register_type(myParticipant);
 
-    mySubscriber = myParticipant->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
-    if (mySubscriber == nullptr) {
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating domain subscriber");
+        mySubscriber = myParticipant->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
+        if (mySubscriber == nullptr) {
+            throw std::runtime_error("Failed creating domain subscriber");
+        }
+
+        mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", myButtonEventType.get_type_name(), 
+                                                        TOPIC_QOS_DEFAULT);    
+        if (mySensorEventTopic == nullptr)  {
+            throw std::runtime_error("Failed creating EV3 sensor event topic");
+        }
+
+        DataReaderQos rqos = mySubscriber->get_default_datareader_qos();
+        rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+        rqos.liveliness().lease_duration = 5;
+        rqos.liveliness().announcement_period = 1;
+        rqos.liveliness().kind = AUTOMATIC_LIVELINESS_QOS;
+
+        myReader = mySubscriber->create_datareader(mySensorEventTopic, rqos, &myListener);
+        if (myReader == nullptr) {
+            throw std::runtime_error("Failed creating EV3 data reader");
+        }
+    } catch (const std::exception& e) {
+        cleanup_dds_objects();
+        throw;
     }
+}
 
-    mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", myButtonEventType.get_type_name(), 
-                                                      TOPIC_QOS_DEFAULT);    
-    if (mySensorEventTopic == nullptr)  {
-        myParticipant->delete_subscriber(mySubscriber);
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 sensor event topic");
+void Ev3SensorSubscriber::cleanup_dds_objects()
+{
+    assert(myParticipant != nullptr);        
+    if (myReader != nullptr) {
+        assert(mySubscriber != nullptr);
+        mySubscriber->delete_datareader(myReader);
     }
-
-    DataReaderQos rqos = mySubscriber->get_default_datareader_qos();
-    rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
-    rqos.liveliness().lease_duration = 5;
-    rqos.liveliness().announcement_period = 1;
-    rqos.liveliness().kind = AUTOMATIC_LIVELINESS_QOS;
-
-    myReader = mySubscriber->create_datareader(mySensorEventTopic, rqos, &myListener);
-    if (myReader == nullptr) {
+    if (mySensorEventTopic != nullptr) {        
         myParticipant->delete_topic(mySensorEventTopic);
-        myParticipant->delete_subscriber(mySubscriber);
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 data reader");
     }
+    if (mySubscriber != nullptr) {
+        myParticipant->delete_subscriber(mySubscriber);
+    }
+    DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
 }
 
 Ev3SensorSubscriber::~Ev3SensorSubscriber()
 {
-    assert(mySubscriber != nullptr);
-    mySubscriber->delete_datareader(myReader);
-    assert(myParticipant != nullptr);
-    myParticipant->delete_subscriber(mySubscriber);
-    myParticipant->delete_topic(mySensorEventTopic);
-    DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
+    cleanup_dds_objects();
 }
 
 void Ev3SensorSubscriber::SubListener::on_subscription_matched(DataReader*, const SubscriptionMatchedStatus& info)

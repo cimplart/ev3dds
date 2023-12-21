@@ -67,35 +67,34 @@ Ev3NodePublisher::Ev3NodePublisher()
         throw std::runtime_error("Failed creating domain participant");
     }  
 
-    mySensorEventType.register_type(myParticipant);
-    myButtonEventType.register_type(myParticipant);
+    try {
+        mySensorEventType.register_type(myParticipant);
+        myButtonEventType.register_type(myParticipant);
 
-    myPublisher = myParticipant->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
-    if (myPublisher == nullptr) {
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 node publisher");
-    }
+        myPublisher = myParticipant->create_publisher(PUBLISHER_QOS_DEFAULT, nullptr);
+        if (myPublisher == nullptr) {
+            throw std::runtime_error("Failed creating EV3 node publisher");
+        }
 
-    mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", myButtonEventType.get_type_name(), 
-                                                     TOPIC_QOS_DEFAULT);
-    if (mySensorEventTopic == nullptr)  {
-        myParticipant->delete_publisher(myPublisher);
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 sensor event topic");
-    }
+        mySensorEventTopic = myParticipant->create_topic("ev3_sensor_event_topic", myButtonEventType.get_type_name(), 
+                                                        TOPIC_QOS_DEFAULT);
+        if (mySensorEventTopic == nullptr)  {
+            throw std::runtime_error("Failed creating EV3 sensor event topic");
+        }
 
-    DataWriterQos wqos = myPublisher->get_default_datawriter_qos();
-    wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;  
-    wqos.liveliness().lease_duration = 5;
-    wqos.liveliness().announcement_period = 1;
-    wqos.liveliness().kind = AUTOMATIC_LIVELINESS_QOS;
+        DataWriterQos wqos = myPublisher->get_default_datawriter_qos();
+        wqos.reliability().kind = RELIABLE_RELIABILITY_QOS;  
+        wqos.liveliness().lease_duration = 5;
+        wqos.liveliness().announcement_period = 1;
+        wqos.liveliness().kind = AUTOMATIC_LIVELINESS_QOS;
 
-    myWriter = myPublisher->create_datawriter(mySensorEventTopic, wqos, &myListener);
-    if (myWriter == nullptr)  {
-        myParticipant->delete_topic(mySensorEventTopic);
-        myParticipant->delete_publisher(myPublisher);
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 sensor event writer");
+        myWriter = myPublisher->create_datawriter(mySensorEventTopic, wqos, &myListener);
+        if (myWriter == nullptr)  {
+            throw std::runtime_error("Failed creating EV3 sensor event writer");
+        }
+    } catch(const std::exception& e) {
+        cleanup_dds_objects();
+        throw;
     }
 
     struct ButtonPair
@@ -125,6 +124,21 @@ Ev3NodePublisher::Ev3NodePublisher()
     }
 }
 
+void Ev3NodePublisher::cleanup_dds_objects()
+{
+    assert(myParticipant != nullptr);        
+    if (myWriter != nullptr) {
+        assert(myPublisher != nullptr);
+        myPublisher->delete_datawriter(myWriter);
+    }
+    if (mySensorEventTopic != nullptr) {        
+        myParticipant->delete_topic(mySensorEventTopic);
+    }
+    if (myPublisher != nullptr) {
+        myParticipant->delete_publisher(myPublisher);
+    }
+    DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
+}
 
 Ev3NodePublisher::~Ev3NodePublisher()
 {
@@ -136,12 +150,7 @@ Ev3NodePublisher::~Ev3NodePublisher()
     for (auto& b : buttons) {
         b->onclick = [](bool){};
     }
-    assert(myPublisher != nullptr);
-    myPublisher->delete_datawriter(myWriter);
-    assert(myParticipant != nullptr);
-    myParticipant->delete_publisher(myPublisher);
-    myParticipant->delete_topic(mySensorEventTopic);
-    DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
+    cleanup_dds_objects();
 }
 
 void Ev3NodePublisher::process_sensors()

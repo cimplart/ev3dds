@@ -64,6 +64,8 @@ private:
         int matched_;
         uint32_t samples_;
     }  myListener;
+
+    void cleanup_dds_objects();
 };
 
 #endif //EV3SENSORSUBSCRIBER_H

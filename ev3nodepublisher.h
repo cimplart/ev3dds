@@ -101,6 +101,8 @@ private:
         //bool firstConnected_;
     } myListener;
 
+    void cleanup_dds_objects();
+
 };
 
 #endif //EV3NODEPUBLISHER_H

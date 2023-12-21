@@ -34,42 +34,52 @@ Ev3NodeSubscriber::Ev3NodeSubscriber()
         throw std::runtime_error("Failed creating domain participant");
     }  
 
-    myMoveCommandType.register_type(myParticipant);
+    try {
+        myMoveCommandType.register_type(myParticipant);
 
-    mySubscriber = myParticipant->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
-    if (mySubscriber == nullptr) {
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating domain subscriber");
+        mySubscriber = myParticipant->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
+        if (mySubscriber == nullptr) {
+            throw std::runtime_error("Failed creating domain subscriber");
+        }
+
+        myMoveCommandTopic = myParticipant->create_topic("ev3_move_command_topic", myMoveCommandType.get_type_name(),
+                                                         TOPIC_QOS_DEFAULT);
+        if (myMoveCommandTopic == nullptr)  {
+            throw std::runtime_error("Failed creating EV3 move command topic");
+        }
+
+        DataReaderQos rqos = mySubscriber->get_default_datareader_qos();
+        rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+
+        myReader = mySubscriber->create_datareader(myMoveCommandTopic, rqos, &myListener);
+        if (myReader == nullptr) {
+            throw std::runtime_error("Failed creating EV3 move data reader");
+        }
+    } catch (const std::exception& e) {
+        cleanup_dds_objects();
+        throw;
     }
+}
 
-    myMoveCommandTopic = myParticipant->create_topic("ev3_move_command_topic", myMoveCommandType.get_type_name(),
-                                                     TOPIC_QOS_DEFAULT);
-    if (myMoveCommandTopic == nullptr)  {
-        myParticipant->delete_subscriber(mySubscriber);
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 move command topic");
+void Ev3NodeSubscriber::cleanup_dds_objects()
+{
+    assert(myParticipant != nullptr);        
+    if (myReader != nullptr) {
+        assert(mySubscriber != nullptr);
+        mySubscriber->delete_datareader(myReader);
     }
-
-    DataReaderQos rqos = mySubscriber->get_default_datareader_qos();
-    rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
-
-    myReader = mySubscriber->create_datareader(myMoveCommandTopic, rqos, &myListener);
-    if (myReader == nullptr) {
+    if (myMoveCommandTopic != nullptr) {        
         myParticipant->delete_topic(myMoveCommandTopic);
-        myParticipant->delete_subscriber(mySubscriber);
-        DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
-        throw std::runtime_error("Failed creating EV3 move data reader");
     }
+    if (mySubscriber != nullptr) {
+        myParticipant->delete_subscriber(mySubscriber);
+    }
+    DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
 }
 
 Ev3NodeSubscriber::~Ev3NodeSubscriber()
 {
-    assert(mySubscriber != nullptr);
-    mySubscriber->delete_datareader(myReader);
-    assert(myParticipant != nullptr);
-    myParticipant->delete_subscriber(mySubscriber);
-    myParticipant->delete_topic(myMoveCommandTopic);
-    DomainParticipantFactory::get_instance()->delete_participant(myParticipant);
+    cleanup_dds_objects();
 }
 
 void Ev3NodeSubscriber::SubListener::on_subscription_matched(DataReader*, const SubscriptionMatchedStatus& info)

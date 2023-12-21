@@ -122,6 +122,7 @@ private:
         CommandListener *myCmdListener = nullptr;
     }  myListener;
    
+    void cleanup_dds_objects();
 };
 
 #endif
