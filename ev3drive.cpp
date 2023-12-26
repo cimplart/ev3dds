@@ -13,8 +13,8 @@ static std::map<enum Ev3MoveType, std::string> moveTypeStr = {
 
 
 Ev3Drive::Ev3Drive() :
-  myLeftMotor(ev3dev::OUTPUT_B),
-  myRightMotor(ev3dev::OUTPUT_C)
+  myLeftMotor(ev3dev::OUTPUT_C),
+  myRightMotor(ev3dev::OUTPUT_B)
 {
     myLeftMotor.set_stop_action("brake");
     myRightMotor.set_stop_action("brake");
@@ -41,10 +41,10 @@ void Ev3Drive::on_move_command(const Ev3MoveCommand& cmd)
                 drive(SPEED, SPEED/2);
                 break;
             case Ev3MoveType::SpinLeft:
-                drive(0, SPEED/2);
+                drive(0, SPEED);
                 break;
             case Ev3MoveType::SpinRight:
-                drive(SPEED/2, 0);
+                drive(SPEED, 0);
                 break;
             case Ev3MoveType::Backward:
                 drive(-SPEED, -SPEED);

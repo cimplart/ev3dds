@@ -16,7 +16,7 @@ public:
 
 private:
 
-    static constexpr int SPEED = 500;
+    static constexpr int SPEED = 600;
 
     ev3dev::large_motor myLeftMotor;
     ev3dev::large_motor myRightMotor;
